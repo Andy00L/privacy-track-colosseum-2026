@@ -37,3 +37,15 @@
 **Decision:** Custom color palette (shadow-green #14be6a, midnight-blue #0b1526) with Geist font.
 
 **Rationale:** Avoids the AI-slop purple/blue gradient aesthetic. Green evokes "stealth/privacy" connotations. Geist is modern and distinctive from the common Inter/Roboto. The dark theme is standard for crypto/DeFi products.
+
+## D7: Next.js 16 upgrade with Turbopack
+
+**Decision:** Upgraded from Next.js 14 to 16.2 with React 19 and Turbopack default bundler.
+
+**Rationale:** CLAUDE.md requires Next.js 16.x. The upgrade brings Turbopack (faster builds), React 19 features, and aligns with the latest stable tooling. Replaced the custom webpack externals config with `serverExternalPackages` for Turbopack compatibility.
+
+## D8: Direct Anchor instruction building vs @coral-xyz/anchor Provider
+
+**Decision:** Build transaction instructions manually using discriminators and serialization rather than using the high-level `@coral-xyz/anchor` `Program.methods` API on the frontend.
+
+**Rationale:** The manual approach avoids importing the full Anchor client bundle (~200KB) into the browser. The discriminator bytes and account layouts are derived directly from the IDL. This produces smaller client bundles while maintaining full compatibility with the on-chain program. The trade-off is more code in `src/program/client.ts`, but the result is a zero-dependency program client that only needs `@solana/web3.js`.

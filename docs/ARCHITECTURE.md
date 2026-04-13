@@ -105,17 +105,29 @@ Client for MagicBlock's Private Ephemeral Rollup:
 - Private state queries for agent balances and transaction history
 - Account delegation to PER
 
-### 5. Next.js Dashboard
+### 5. Program Client (TypeScript)
+
+**Location:** `src/program/`
+
+Typed TypeScript client for interacting with the ShadowPay Anchor program. Provides:
+- `buildRegisterServiceIx()` - Build a register_service transaction instruction
+- `buildRegisterAgentIx()` - Build a register_agent transaction instruction  
+- `fetchAllServices()` - Query all ServiceAccount PDAs from on-chain
+- `fetchAllAgents()` - Query all AgentAccount PDAs from on-chain
+- Account deserialization matching the Anchor account discriminator format
+- PDA derivation helpers (`deriveServicePda`, `deriveAgentPda`)
+
+### 6. Next.js 16 Dashboard
 
 **Location:** `app/`
 
-Web interface for managing services and agents:
+Web interface built with Next.js 16 (Turbopack, React 19) for managing services and agents:
 - **Landing** (`/`) - Project overview and how-it-works
-- **Services** (`/services`) - Browse and register API services
-- **Agents** (`/agents`) - Deploy and monitor AI agents
-- **Dashboard** (`/dashboard`) - Wallet info, balances, activity
+- **Services** (`/services`) - Browse and register API services (sends real Anchor transactions)
+- **Agents** (`/agents`) - Deploy and monitor AI agents (sends real Anchor transactions)
+- **Dashboard** (`/dashboard`) - Wallet info, on-chain balances, service/agent counts
 
-### 6. Demo Agent
+### 7. Demo Agent
 
 **Location:** `src/agent/`
 

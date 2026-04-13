@@ -32,7 +32,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 | Tool | Version | Install |
 |------|---------|---------|
-| Node.js | >= 24.x | [nodejs.org](https://nodejs.org) |
+| Node.js | >= 20.x | [nodejs.org](https://nodejs.org) |
 | Rust | >= 1.85 | [rustup.rs](https://rustup.rs) |
 | Solana CLI | >= 2.3 | [docs.solanalabs.com](https://docs.solanalabs.com/cli/install) |
 | Anchor CLI | >= 1.0 | [anchor-lang.com](https://www.anchor-lang.com/docs/installation) |
@@ -170,6 +170,7 @@ shadowpay/
 │   ├── components/         # Shared components
 │   └── api/                # API routes (x402 gateway)
 ├── src/
+│   ├── program/            # Anchor program TypeScript client
 │   ├── payments/           # MagicBlock Private Payments client
 │   ├── per/                # PER/TEE auth client
 │   └── agent/              # Demo agent runner

@@ -1,4 +1,4 @@
-# Implementation Plan — ShadowPay
+# Implementation Plan  - ShadowPay
 
 ## 1. Stack Technique
 
@@ -59,7 +59,7 @@ The x402 facilitator verifies that the SPL token transfer instruction in the sig
 
 ## 3. Features MVP Prioritized
 
-### MUST (3 features — core MVP)
+### MUST (3 features  - core MVP)
 
 **M1: Service Registry (Anchor Program)**
 - Instructions: `register_service`, `register_agent`, `update_service`, `deregister_service`
@@ -73,17 +73,17 @@ The x402 facilitator verifies that the SPL token transfer instruction in the sig
 - Route: `GET /api/services/[id]` returns 402 with payment requirements from on-chain registry
 - `withX402()` handles X-Payment header verification via x402 facilitator
 - On valid payment: route handler executes and returns service data
-- Single process with dashboard — no separate server
+- Single process with dashboard  - no separate server
 - Tests: 402 flow, payment verification, response delivery
 
 **M3: Private Payment Settlement**
 - Integration with MagicBlock Private Payments API
 - Functions: `deposit()`, `transfer()`, `withdraw()`, `getBalance()`
 - Handles unsigned TX building, client-side signing, and submission
-- Confidential USDC between agents — no traceable on-chain link
+- Confidential USDC between agents  - no traceable on-chain link
 - Tests: deposit, transfer, withdraw, balance query
 
-### SHOULD (2 features — competitive edge)
+### SHOULD (2 features  - competitive edge)
 
 **S1: PER Agent State**
 - Agent balances and transaction history stored in MagicBlock PER
@@ -130,7 +130,7 @@ The x402 facilitator verifies that the SPL token transfer instruction in the sig
 | Risk | Impact | Probability | Mitigation |
 |------|--------|------------|-----------|
 | MagicBlock Private Payments API unavailable on devnet | Can't demo private payments | Medium | Mock API fallback that simulates the flow, use mainnet beta if needed |
-| PER TEE auth complexity | Delays PER integration | Medium | PER is SHOULD not MUST — gateway works without it. Use documented TEE auth pattern from Shield Poker |
+| PER TEE auth complexity | Delays PER integration | Medium | PER is SHOULD not MUST  - gateway works without it. Use documented TEE auth pattern from Shield Poker |
 | x402 @x402/svm package issues | Can't build gateway | Low | Fallback to manual HTTP 402 implementation (we have full code from Solana guide) |
 | Anchor program deployment on devnet | Build/deploy failures | Low | Test locally with `anchor test` first. Devnet is stable. |
 | Solana devnet rate limits | Tests fail intermittently | Low | Add retry logic, use confirmed commitment |
