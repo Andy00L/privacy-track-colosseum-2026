@@ -64,35 +64,39 @@ export default function AgentsPage() {
 
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Agents</h1>
-          <p className="mt-1 text-slate-400">
-            Deploy and manage AI agents on the ShadowPay network
-          </p>
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="section-header mb-0">
+          <h1>Agents</h1>
+          <p>Deploy and manage AI agents on the ShadowPay network</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="btn-primary"
+          className={showForm ? "btn-secondary" : "btn-primary"}
+          aria-expanded={showForm}
+          aria-controls="deploy-form"
         >
           {showForm ? "Cancel" : "Deploy Agent"}
         </button>
       </div>
 
       {error && (
-        <div className="mb-6 rounded-lg border border-red-800/50 bg-red-900/20 px-4 py-3 text-sm text-red-400">
-          {error}
+        <div className="alert-error" role="alert">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="mt-0.5 shrink-0" aria-hidden="true">
+            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M8 5V8.5M8 11H8.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <span>{error}</span>
         </div>
       )}
 
       {showForm && (
-        <div className="card mb-8">
-          <h2 className="mb-4 text-lg font-semibold text-white">
+        <div id="deploy-form" className="card mb-8">
+          <h2 className="mb-6 text-lg font-semibold text-white">
             Deploy a New Agent
           </h2>
           <div>
-            <label htmlFor="agentName" className="mb-1 block text-sm text-slate-400">
-              Agent Name
+            <label htmlFor="agentName" className="mb-1.5 block text-sm font-medium text-slate-300">
+              Agent Name <span className="text-red-400" aria-label="required">*</span>
             </label>
             <input
               id="agentName"
@@ -102,45 +106,64 @@ export default function AgentsPage() {
               value={agentName}
               onChange={(e) => setAgentName(e.target.value)}
               maxLength={64}
+              required
+              aria-required="true"
             />
+            <p className="mt-1.5 text-xs text-slate-500">
+              Choose a unique identifier for your agent. Letters, numbers, and hyphens only.
+            </p>
           </div>
           <button
             onClick={handleRegister}
             disabled={loading}
-            className="btn-primary mt-4"
+            className="btn-primary mt-6"
           >
-            {loading ? "Deploying..." : "Deploy on Solana"}
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.25" />
+                  <path d="M12 2C6.477 2 2 6.477 2 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                Deploying...
+              </span>
+            ) : (
+              "Deploy on Solana"
+            )}
           </button>
         </div>
       )}
 
       {agents.length === 0 ? (
-        <div className="card flex flex-col items-center gap-4 py-16 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-midnight-800">
+        <div className="empty-state">
+          <div className="empty-state-icon">
             <svg
-              width="24"
-              height="24"
+              width="28"
+              height="28"
               viewBox="0 0 24 24"
               fill="none"
-              className="text-slate-500"
+              aria-hidden="true"
             >
-              <path
-                d="M9 3H5C3.89543 3 3 3.89543 3 5V9M9 21H5C3.89543 21 3 20.1046 3 19V15M21 15V19C21 20.1046 20.1046 21 19 21H15M15 3H19C20.1046 3 21 3.89543 21 5V9"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-              <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" />
+              <rect x="4" y="4" width="16" height="16" rx="4" stroke="currentColor" strokeWidth="1.5" />
+              <circle cx="10" cy="12" r="1.5" fill="currentColor" />
+              <circle cx="14" cy="12" r="1.5" fill="currentColor" />
+              <path d="M9 16C9.5 17 10.5 17.5 12 17.5C13.5 17.5 14.5 17 15 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </div>
           <div>
             <h3 className="text-lg font-semibold text-white">
               No agents deployed yet
             </h3>
-            <p className="mt-1 text-sm text-slate-400">
-              Connect your wallet and deploy your first AI agent on ShadowPay.
+            <p className="mx-auto mt-1.5 max-w-sm text-sm text-slate-400">
+              Connect your wallet and deploy your first AI agent. Agents can
+              autonomously discover and pay for API services.
             </p>
           </div>
+          <button
+            onClick={() => setShowForm(true)}
+            className="btn-secondary mt-2"
+          >
+            Deploy your first agent
+          </button>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

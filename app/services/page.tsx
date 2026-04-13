@@ -93,36 +93,40 @@ export default function ServicesPage() {
 
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Services</h1>
-          <p className="mt-1 text-slate-400">
-            Browse and register API services on the ShadowPay network
-          </p>
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="section-header mb-0">
+          <h1>Services</h1>
+          <p>Browse and register API services on the ShadowPay network</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="btn-primary"
+          className={showForm ? "btn-secondary" : "btn-primary"}
+          aria-expanded={showForm}
+          aria-controls="register-form"
         >
           {showForm ? "Cancel" : "Register Service"}
         </button>
       </div>
 
       {error && (
-        <div className="mb-6 rounded-lg border border-red-800/50 bg-red-900/20 px-4 py-3 text-sm text-red-400">
-          {error}
+        <div className="alert-error" role="alert">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="mt-0.5 shrink-0" aria-hidden="true">
+            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M8 5V8.5M8 11H8.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <span>{error}</span>
         </div>
       )}
 
       {showForm && (
-        <div className="card mb-8">
-          <h2 className="mb-4 text-lg font-semibold text-white">
+        <div id="register-form" className="card mb-8">
+          <h2 className="mb-6 text-lg font-semibold text-white">
             Register a New Service
           </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2">
             <div>
-              <label htmlFor="serviceId" className="mb-1 block text-sm text-slate-400">
-                Service ID
+              <label htmlFor="serviceId" className="mb-1.5 block text-sm font-medium text-slate-300">
+                Service ID <span className="text-red-400" aria-label="required">*</span>
               </label>
               <input
                 id="serviceId"
@@ -134,11 +138,13 @@ export default function ServicesPage() {
                   setForm((f) => ({ ...f, serviceId: e.target.value }))
                 }
                 maxLength={64}
+                required
+                aria-required="true"
               />
             </div>
             <div>
-              <label htmlFor="endpoint" className="mb-1 block text-sm text-slate-400">
-                Endpoint URL
+              <label htmlFor="endpoint" className="mb-1.5 block text-sm font-medium text-slate-300">
+                Endpoint URL <span className="text-red-400" aria-label="required">*</span>
               </label>
               <input
                 id="endpoint"
@@ -150,11 +156,13 @@ export default function ServicesPage() {
                   setForm((f) => ({ ...f, endpoint: e.target.value }))
                 }
                 maxLength={256}
+                required
+                aria-required="true"
               />
             </div>
             <div>
-              <label htmlFor="price" className="mb-1 block text-sm text-slate-400">
-                Price per request (USDC)
+              <label htmlFor="price" className="mb-1.5 block text-sm font-medium text-slate-300">
+                Price per request (USDC) <span className="text-red-400" aria-label="required">*</span>
               </label>
               <input
                 id="price"
@@ -167,11 +175,13 @@ export default function ServicesPage() {
                 onChange={(e) =>
                   setForm((f) => ({ ...f, price: e.target.value }))
                 }
+                required
+                aria-required="true"
               />
             </div>
             <div>
-              <label htmlFor="description" className="mb-1 block text-sm text-slate-400">
-                Description
+              <label htmlFor="description" className="mb-1.5 block text-sm font-medium text-slate-300">
+                Description <span className="text-red-400" aria-label="required">*</span>
               </label>
               <input
                 id="description"
@@ -183,50 +193,64 @@ export default function ServicesPage() {
                   setForm((f) => ({ ...f, description: e.target.value }))
                 }
                 maxLength={256}
+                required
+                aria-required="true"
               />
             </div>
           </div>
-          <button
-            onClick={handleRegister}
-            disabled={loading}
-            className="btn-primary mt-4"
-          >
-            {loading ? "Registering..." : "Register on Solana"}
-          </button>
+          <div className="mt-6 flex items-center gap-3">
+            <button
+              onClick={handleRegister}
+              disabled={loading}
+              className="btn-primary"
+            >
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.25" />
+                    <path d="M12 2C6.477 2 2 6.477 2 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                  Registering...
+                </span>
+              ) : (
+                "Register on Solana"
+              )}
+            </button>
+            <p className="text-xs text-slate-500">All fields are required</p>
+          </div>
         </div>
       )}
 
       {services.length === 0 ? (
-        <div className="card flex flex-col items-center gap-4 py-16 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-midnight-800">
+        <div className="empty-state">
+          <div className="empty-state-icon">
             <svg
-              width="24"
-              height="24"
+              width="28"
+              height="28"
               viewBox="0 0 24 24"
               fill="none"
-              className="text-slate-500"
+              aria-hidden="true"
             >
-              <path
-                d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M12 8V12M12 16H12.01"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
+              <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M7 10L10 13L7 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <line x1="13" y1="16" x2="17" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </div>
           <div>
             <h3 className="text-lg font-semibold text-white">
               No services registered yet
             </h3>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mx-auto mt-1.5 max-w-sm text-sm text-slate-400">
               Connect your wallet and register the first API service on ShadowPay.
+              Other agents will be able to discover and pay for it.
             </p>
           </div>
+          <button
+            onClick={() => setShowForm(true)}
+            className="btn-secondary mt-2"
+          >
+            Register your first service
+          </button>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
