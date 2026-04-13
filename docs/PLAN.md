@@ -7,7 +7,7 @@
 | Smart contract | Anchor 0.32.1 (Rust) | Standard for Solana programs. Judges know it. Required for MagicBlock delegation. |
 | Privacy layer | MagicBlock PER + Private Payments API | Core hackathon requirement. TEE-based privacy, confidential USDC. |
 | Payment protocol | x402 (`@x402/svm`) | HTTP-native agent payments. Solana drives 65% of x402 volume. Brief explicitly mentions x402. |
-| Frontend | Next.js 14 + Tailwind CSS | Fast to build, App Router for API routes, SSR. |
+| Frontend | Next.js 16 + Tailwind CSS | App Router for API routes, Turbopack default, React 19. |
 | Wallet | `@solana/wallet-adapter-react` | Standard Solana wallet integration. Phantom, Backpack, Solflare support. |
 | Payment gateway | Next.js API Routes + `@x402/next` | x402 middleware via `withX402()` wrapper on API routes. Single process with dashboard. |
 | Agent runtime | TypeScript (Node.js) | Shared with gateway and frontend. Single language stack. |
@@ -23,7 +23,7 @@
 
 ```
            ┌──────────────────────────────────────────────┐
-           │           Next.js 14 (App Router)            │
+           │           Next.js 16 (App Router)            │
            │  Dashboard UI + x402 API Routes (withX402)   │
            └──────────────────┬───────────────────────────┘
                               │

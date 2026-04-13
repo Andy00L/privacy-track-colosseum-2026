@@ -1,9 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack: (config) => {
-    config.externals.push("pino-pretty", "lokijs", "encoding");
-    return config;
-  },
+  serverExternalPackages: ["pino-pretty", "lokijs", "encoding"],
   async headers() {
     return [
       {

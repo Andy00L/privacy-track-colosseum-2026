@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { fetchAllServices, fetchAllAgents } from "@/src/program/client";
 
 interface DashboardStats {
   solBalance: number;
@@ -42,16 +43,31 @@ export default function DashboardPage() {
     }
 
     try {
-      const balance = await connection.getBalance(publicKey);
+      const [balance, services, agents] = await Promise.all([
+        connection.getBalance(publicKey),
+        fetchAllServices(connection),
+        fetchAllAgents(connection),
+      ]);
+
+      const myServices = services.filter((s) => s.owner === publicKey.toBase58());
+      const myAgents = agents.filter((a) => a.owner === publicKey.toBase58());
+      const totalPayments = myAgents.reduce((sum, a) => sum + a.totalPayments, 0);
+
       setStats({
         solBalance: balance / LAMPORTS_PER_SOL,
-        servicesRegistered: 0,
-        agentsDeployed: 0,
-        totalPayments: 0,
+        servicesRegistered: myServices.length,
+        agentsDeployed: myAgents.length,
+        totalPayments,
         privateBalance: "Requires PER connection",
       });
     } catch {
-      // Silently handle - stats will show defaults
+      // Fallback to basic balance if program not deployed
+      try {
+        const balance = await connection.getBalance(publicKey);
+        setStats((prev) => ({ ...prev, solBalance: balance / LAMPORTS_PER_SOL }));
+      } catch {
+        // Network unavailable
+      }
     } finally {
       setLoading(false);
     }
@@ -180,7 +196,9 @@ export default function DashboardPage() {
           </div>
           <div>
             <p className="text-sm font-medium text-slate-400">
-              No transactions yet
+              {stats.servicesRegistered > 0 || stats.agentsDeployed > 0
+                ? `${stats.servicesRegistered} service(s), ${stats.agentsDeployed} agent(s) registered`
+                : "No transactions yet"}
             </p>
             <p className="mt-1 text-xs text-slate-500">
               Register a service or deploy an agent to see activity here.

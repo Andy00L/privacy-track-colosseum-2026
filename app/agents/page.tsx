@@ -1,32 +1,45 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { PublicKey } from "@solana/web3.js";
+import { useConnection } from "@solana/wallet-adapter-react";
 import { AgentCard } from "../components/AgentCard";
-
-interface AgentEntry {
-  name: string;
-  owner: string;
-  active: boolean;
-  totalPayments: number;
-}
-
-const PROGRAM_ID = new PublicKey(
-  process.env.NEXT_PUBLIC_SHADOWPAY_PROGRAM_ID ||
-    "85nd28UHwfBzDcA9fRcCFjSGvdvvns7u7yxjcwVjuzpK"
-);
+import {
+  buildRegisterAgentIx,
+  buildAndSignTx,
+  fetchAllAgents,
+  type AgentData,
+} from "@/src/program/client";
 
 export default function AgentsPage() {
-  const { publicKey } = useWallet();
-  const [agents, setAgents] = useState<AgentEntry[]>([]);
+  const { publicKey, sendTransaction } = useWallet();
+  const { connection } = useConnection();
+  const [agents, setAgents] = useState<AgentData[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [fetchingAgents, setFetchingAgents] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [txSignature, setTxSignature] = useState<string | null>(null);
   const [agentName, setAgentName] = useState("");
 
+  const loadAgents = useCallback(async () => {
+    setFetchingAgents(true);
+    try {
+      const onChainAgents = await fetchAllAgents(connection);
+      setAgents(onChainAgents);
+    } catch {
+      // Program may not be deployed yet
+    } finally {
+      setFetchingAgents(false);
+    }
+  }, [connection]);
+
+  useEffect(() => {
+    loadAgents();
+  }, [loadAgents]);
+
   const handleRegister = useCallback(async () => {
-    if (!publicKey) {
+    if (!publicKey || !sendTransaction) {
       setError("Connect your wallet first");
       return;
     }
@@ -38,29 +51,33 @@ export default function AgentsPage() {
 
     setLoading(true);
     setError(null);
+    setTxSignature(null);
 
     try {
-      const [agentPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("agent"), publicKey.toBuffer()],
-        PROGRAM_ID
-      );
+      const ix = buildRegisterAgentIx(publicKey, agentName.trim());
+      const tx = await buildAndSignTx(connection, publicKey, [ix]);
+      const signature = await sendTransaction(tx, connection);
+      await connection.confirmTransaction(signature, "confirmed");
 
-      const newAgent: AgentEntry = {
-        name: agentName.trim(),
-        owner: publicKey.toBase58(),
-        active: true,
-        totalPayments: 0,
-      };
-
-      setAgents((prev) => [...prev, newAgent]);
+      setTxSignature(signature);
       setAgentName("");
       setShowForm(false);
+
+      await loadAgents();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to register agent");
+      const msg = err instanceof Error ? err.message : "Transaction failed";
+      if (msg.includes("custom program error") || msg.includes("not found")) {
+        setError(
+          "Transaction failed. The ShadowPay program may not be deployed on the current network. " +
+          "Run 'anchor deploy' to deploy it first."
+        );
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
-  }, [publicKey, agentName]);
+  }, [publicKey, sendTransaction, agentName, connection, loadAgents]);
 
   return (
     <div>
@@ -86,6 +103,26 @@ export default function AgentsPage() {
             <path d="M8 5V8.5M8 11H8.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           <span>{error}</span>
+        </div>
+      )}
+
+      {txSignature && (
+        <div className="mb-6 flex items-start gap-3 rounded-lg border border-shadow-800/40 bg-shadow-900/10 px-4 py-3 text-sm text-shadow-400" role="status">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="mt-0.5 shrink-0" aria-hidden="true">
+            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M5 8L7 10L11 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span>
+            Agent deployed on-chain.{" "}
+            <a
+              href={`https://explorer.solana.com/tx/${txSignature}?cluster=devnet`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-shadow-300"
+            >
+              View transaction
+            </a>
+          </span>
         </div>
       )}
 
@@ -133,7 +170,17 @@ export default function AgentsPage() {
         </div>
       )}
 
-      {agents.length === 0 ? (
+      {fetchingAgents ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="card">
+              <div className="skeleton h-4 w-24 rounded" />
+              <div className="skeleton mt-3 h-3 w-full rounded" />
+              <div className="skeleton mt-2 h-3 w-1/2 rounded" />
+            </div>
+          ))}
+        </div>
+      ) : agents.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-icon">
             <svg
@@ -168,7 +215,13 @@ export default function AgentsPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {agents.map((agent) => (
-            <AgentCard key={agent.name} {...agent} />
+            <AgentCard
+              key={agent.name}
+              name={agent.name}
+              owner={agent.owner}
+              active={agent.active}
+              totalPayments={agent.totalPayments}
+            />
           ))}
         </div>
       )}

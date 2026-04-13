@@ -95,7 +95,7 @@ Pre-built TypeScript agent that autonomously discovers services, pays via x402, 
 
 ```
          ┌──────────────────────────────────────────┐
-         │         Next.js 14 (App Router)           │
+         │         Next.js 16 (App Router)           │
          │  Dashboard UI + x402 API Routes           │
          └──────────────────┬───────────────────────┘
                             │
@@ -124,7 +124,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed diagrams and data 
 | Smart contract | [Anchor](https://www.anchor-lang.com/docs) (Rust) | Standard for Solana programs, MagicBlock SDK compatible |
 | Privacy | [MagicBlock PER](https://docs.magicblock.gg/pages/private-ephemeral-rollups-pers/how-to-guide/quickstart) + [Private Payments API](https://docs.magicblock.gg/pages/private-ephemeral-rollups-pers/api-reference/per/introduction) | TEE-based privacy, confidential USDC transfers |
 | Payment protocol | [x402](https://www.x402.org/) | HTTP-native agent payments, Solana drives 65% of x402 volume |
-| Frontend | [Next.js 14](https://nextjs.org/docs) + [Tailwind CSS](https://tailwindcss.com/docs) | App Router with API routes, fast to build |
+| Frontend | [Next.js 16](https://nextjs.org/docs) + [Tailwind CSS](https://tailwindcss.com/docs) | App Router with API routes, Turbopack |
 | Wallet | [Solana Wallet Adapter](https://github.com/anza-xyz/wallet-adapter) | Phantom, Backpack, Solflare support |
 
 ## API Documentation

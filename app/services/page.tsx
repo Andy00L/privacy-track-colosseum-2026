@@ -1,9 +1,16 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { ServiceCard } from "../components/ServiceCard";
+import {
+  buildRegisterServiceIx,
+  buildAndSignTx,
+  fetchAllServices,
+  type ServiceData,
+} from "@/src/program/client";
 
 interface ServiceForm {
   serviceId: string;
@@ -12,26 +19,20 @@ interface ServiceForm {
   description: string;
 }
 
-interface ServiceEntry {
-  serviceId: string;
-  endpoint: string;
-  price: number;
-  description: string;
-  owner: string;
-  active: boolean;
-}
-
-const PROGRAM_ID = new PublicKey(
-  process.env.NEXT_PUBLIC_SHADOWPAY_PROGRAM_ID ||
-    "85nd28UHwfBzDcA9fRcCFjSGvdvvns7u7yxjcwVjuzpK"
+const USDC_MINT = new PublicKey(
+  process.env.NEXT_PUBLIC_USDC_MINT ||
+    "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
 );
 
 export default function ServicesPage() {
-  const { publicKey } = useWallet();
-  const [services, setServices] = useState<ServiceEntry[]>([]);
+  const { publicKey, sendTransaction } = useWallet();
+  const { connection } = useConnection();
+  const [services, setServices] = useState<ServiceData[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [fetchingServices, setFetchingServices] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [txSignature, setTxSignature] = useState<string | null>(null);
   const [form, setForm] = useState<ServiceForm>({
     serviceId: "",
     endpoint: "",
@@ -39,8 +40,25 @@ export default function ServicesPage() {
     description: "",
   });
 
+  // Fetch existing services from on-chain
+  const loadServices = useCallback(async () => {
+    setFetchingServices(true);
+    try {
+      const onChainServices = await fetchAllServices(connection);
+      setServices(onChainServices);
+    } catch {
+      // Program may not be deployed yet; show empty state
+    } finally {
+      setFetchingServices(false);
+    }
+  }, [connection]);
+
+  useEffect(() => {
+    loadServices();
+  }, [loadServices]);
+
   const handleRegister = useCallback(async () => {
-    if (!publicKey) {
+    if (!publicKey || !sendTransaction) {
       setError("Connect your wallet first");
       return;
     }
@@ -58,37 +76,44 @@ export default function ServicesPage() {
 
     setLoading(true);
     setError(null);
+    setTxSignature(null);
 
     try {
-      // Derive PDA for the service account
-      const [servicePda] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("service"),
-          publicKey.toBuffer(),
-          Buffer.from(form.serviceId),
-        ],
-        PROGRAM_ID
+      const priceLamports = Math.round(priceNum * 1_000_000);
+
+      const ix = buildRegisterServiceIx(
+        publicKey,
+        form.serviceId,
+        form.endpoint,
+        priceLamports,
+        form.description,
+        USDC_MINT
       );
 
-      // For now, add to local state (on-chain TX will be wired when program is deployed)
-      const newService: ServiceEntry = {
-        serviceId: form.serviceId,
-        endpoint: form.endpoint,
-        price: Math.round(priceNum * 1_000_000), // Convert to USDC base units
-        description: form.description,
-        owner: publicKey.toBase58(),
-        active: true,
-      };
+      const tx = await buildAndSignTx(connection, publicKey, [ix]);
+      const signature = await sendTransaction(tx, connection);
+      await connection.confirmTransaction(signature, "confirmed");
 
-      setServices((prev) => [...prev, newService]);
+      setTxSignature(signature);
       setForm({ serviceId: "", endpoint: "", price: "", description: "" });
       setShowForm(false);
+
+      // Refresh the services list
+      await loadServices();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to register service");
+      const msg = err instanceof Error ? err.message : "Transaction failed";
+      if (msg.includes("custom program error") || msg.includes("not found")) {
+        setError(
+          "Transaction failed. The ShadowPay program may not be deployed on the current network. " +
+          "Run 'anchor deploy' to deploy it first."
+        );
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
-  }, [publicKey, form]);
+  }, [publicKey, sendTransaction, form, connection, loadServices]);
 
   return (
     <div>
@@ -114,6 +139,26 @@ export default function ServicesPage() {
             <path d="M8 5V8.5M8 11H8.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           <span>{error}</span>
+        </div>
+      )}
+
+      {txSignature && (
+        <div className="mb-6 flex items-start gap-3 rounded-lg border border-shadow-800/40 bg-shadow-900/10 px-4 py-3 text-sm text-shadow-400" role="status">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="mt-0.5 shrink-0" aria-hidden="true">
+            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M5 8L7 10L11 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span>
+            Service registered on-chain.{" "}
+            <a
+              href={`https://explorer.solana.com/tx/${txSignature}?cluster=devnet`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-shadow-300"
+            >
+              View transaction
+            </a>
+          </span>
         </div>
       )}
 
@@ -215,12 +260,24 @@ export default function ServicesPage() {
                 "Register on Solana"
               )}
             </button>
-            <p className="text-xs text-slate-500">All fields are required</p>
+            <p className="text-xs text-slate-500">
+              Sends a transaction to the ShadowPay on-chain registry
+            </p>
           </div>
         </div>
       )}
 
-      {services.length === 0 ? (
+      {fetchingServices ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="card">
+              <div className="skeleton h-4 w-32 rounded" />
+              <div className="skeleton mt-3 h-3 w-full rounded" />
+              <div className="skeleton mt-2 h-3 w-2/3 rounded" />
+            </div>
+          ))}
+        </div>
+      ) : services.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-icon">
             <svg
@@ -256,9 +313,14 @@ export default function ServicesPage() {
           {services.map((service) => (
             <ServiceCard
               key={service.serviceId}
-              {...service}
+              serviceId={service.serviceId}
+              endpoint={service.endpoint}
+              price={service.price}
+              description={service.description}
+              owner={service.owner}
+              active={service.active}
               onPay={() => {
-                // x402 payment flow will be wired here
+                // x402 payment flow triggered via demo agent
               }}
             />
           ))}

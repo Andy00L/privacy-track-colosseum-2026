@@ -6,6 +6,7 @@ pub mod state;
 use anchor_lang::prelude::*;
 
 pub use constants::*;
+#[allow(unused_imports)]
 pub use error::*;
 pub use instructions::*;
 pub use state::*;
