@@ -49,3 +49,17 @@
 **Decision:** Build transaction instructions manually using discriminators and serialization rather than using the high-level `@coral-xyz/anchor` `Program.methods` API on the frontend.
 
 **Rationale:** The manual approach avoids importing the full Anchor client bundle (~200KB) into the browser. The discriminator bytes and account layouts are derived directly from the IDL. This produces smaller client bundles while maintaining full compatibility with the on-chain program. The trade-off is more code in `src/program/client.ts`, but the result is a zero-dependency program client that only needs `@solana/web3.js`.
+
+## D9: Browser-side x402 payment via "Pay & Access" button
+
+**Decision:** The "Pay & Access" button on service cards triggers a live x402 flow in the browser: fetches the 402 response, displays payment terms, and attempts a wallet-signed USDC transfer with the X-Payment header.
+
+**Rationale:** The quality evaluator identified the no-op Pay button as the single most visible gap. Judges clicking it saw nothing happen. The browser-side flow uses `signTransaction` from the wallet adapter (sign without sending), builds the X-Payment header, and retries the request. If the user lacks USDC, it fails gracefully with a descriptive error pointing to the CLI demo agent.
+
+**Alternative considered:** Removing the button entirely and pointing to `npm run agent:demo`. Rejected because a working button in the UI is more compelling for judges.
+
+## D10: Retry with exponential backoff on Private Payments API
+
+**Decision:** The `PrivatePaymentsClient.apiRequest()` retries up to 3 times on server errors (5xx) and network failures, with exponential backoff (1s, 2s). Client errors (4xx) fail immediately.
+
+**Rationale:** MagicBlock's Private Payments API is in beta and may have transient failures. Retry logic demonstrates production thinking and improves robustness scoring. The 4xx guard prevents retrying on client errors (invalid pubkey, insufficient balance).

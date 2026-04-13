@@ -38,20 +38,41 @@ export class PrivatePaymentsClient {
     body?: Record<string, unknown>
   ): Promise<T> {
     const url = `${this.config.apiBaseUrl}${endpoint}`;
-    const options: RequestInit = {
-      method,
-      headers: { "Content-Type": "application/json" },
-    };
-    if (body) {
-      options.body = JSON.stringify(body);
-    }
+    let lastError: unknown;
 
-    const response = await fetch(url, options);
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Private Payments API error (${response.status}): ${error}`);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const options: RequestInit = {
+          method,
+          headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(15000),
+        };
+        if (body) {
+          options.body = JSON.stringify(body);
+        }
+
+        const response = await fetch(url, options);
+        if (!response.ok) {
+          const errorText = await response.text();
+          if (response.status < 500) {
+            throw new Error(`Private Payments API error (${response.status}): ${errorText}`);
+          }
+          lastError = new Error(`Private Payments API error (${response.status}): ${errorText}`);
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+            continue;
+          }
+          throw lastError;
+        }
+        return response.json() as Promise<T>;
+      } catch (err) {
+        lastError = err;
+        if (err instanceof Error && err.message.includes("API error (4")) throw err;
+        if (attempt === 2) throw err;
+        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+      }
     }
-    return response.json() as Promise<T>;
+    throw lastError;
   }
 
   async deposit(params: DepositParams): Promise<PrivatePaymentResponse> {
@@ -127,7 +148,9 @@ export class PrivatePaymentsClient {
 
   async healthCheck(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.config.apiBaseUrl}/health`);
+      const response = await fetch(`${this.config.apiBaseUrl}/health`, {
+        signal: AbortSignal.timeout(5000),
+      });
       return response.ok;
     } catch {
       return false;

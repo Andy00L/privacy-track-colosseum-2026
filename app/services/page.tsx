@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useConnection } from "@solana/wallet-adapter-react";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, Transaction } from "@solana/web3.js";
 import { ServiceCard } from "../components/ServiceCard";
 import {
   buildRegisterServiceIx,
@@ -11,6 +11,19 @@ import {
   fetchAllServices,
   type ServiceData,
 } from "@/src/program/client";
+
+interface X402Terms {
+  x402Version: number;
+  network: string;
+  payment: {
+    recipientWallet: string;
+    tokenAccount: string;
+    mint: string;
+    amount: number;
+    amountUSDC: number;
+    description: string;
+  };
+}
 
 interface ServiceForm {
   serviceId: string;
@@ -25,7 +38,7 @@ const USDC_MINT = new PublicKey(
 );
 
 export default function ServicesPage() {
-  const { publicKey, sendTransaction } = useWallet();
+  const { publicKey, sendTransaction, signTransaction } = useWallet();
   const { connection } = useConnection();
   const [services, setServices] = useState<ServiceData[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -39,6 +52,11 @@ export default function ServicesPage() {
     price: "",
     description: "",
   });
+  const [selectedService, setSelectedService] = useState<ServiceData | null>(null);
+  const [paymentTerms, setPaymentTerms] = useState<X402Terms | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentResult, setPaymentResult] = useState<Record<string, unknown> | null>(null);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   // Fetch existing services from on-chain
   const loadServices = useCallback(async () => {
@@ -115,6 +133,89 @@ export default function ServicesPage() {
     }
   }, [publicKey, sendTransaction, form, connection, loadServices]);
 
+  const handlePayRequest = useCallback(async (service: ServiceData) => {
+    setSelectedService(service);
+    setPaymentTerms(null);
+    setPaymentResult(null);
+    setPaymentError(null);
+    setPaymentLoading(true);
+
+    try {
+      const res = await fetch(`/api/services/${encodeURIComponent(service.serviceId)}`);
+      if (res.status === 402) {
+        setPaymentTerms((await res.json()) as X402Terms);
+      } else if (res.status === 404) {
+        setPaymentError(
+          `Service "${service.serviceId}" is not in the x402 demo gateway. ` +
+          "Available demo services: weather, ip-info, timestamp."
+        );
+      } else {
+        const data = await res.json().catch(() => ({ error: "Unknown error" }));
+        setPaymentError((data as { error?: string }).error || `Unexpected response: ${res.status}`);
+      }
+    } catch (err) {
+      setPaymentError(err instanceof Error ? err.message : "Failed to fetch payment terms");
+    } finally {
+      setPaymentLoading(false);
+    }
+  }, []);
+
+  const handlePayConfirm = useCallback(async () => {
+    if (!publicKey || !signTransaction || !paymentTerms || !selectedService) return;
+
+    setPaymentLoading(true);
+    setPaymentError(null);
+
+    try {
+      const { payment } = paymentTerms;
+      const mint = new PublicKey(payment.mint);
+      const destination = new PublicKey(payment.tokenAccount);
+
+      const { getAssociatedTokenAddress, createTransferInstruction } = await import("@solana/spl-token");
+      const sourceAta = await getAssociatedTokenAddress(mint, publicKey);
+      const transferIx = createTransferInstruction(sourceAta, destination, publicKey, payment.amount);
+
+      const { blockhash } = await connection.getLatestBlockhash("confirmed");
+      const tx = new Transaction({ recentBlockhash: blockhash, feePayer: publicKey });
+      tx.add(transferIx);
+
+      const signedTx = await signTransaction(tx);
+      const serializedTx = signedTx.serialize().toString("base64");
+      const xPayment = btoa(JSON.stringify({ payload: { serializedTransaction: serializedTx } }));
+
+      const res = await fetch(`/api/services/${encodeURIComponent(selectedService.serviceId)}`, {
+        headers: { "X-Payment": xPayment },
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setPaymentResult(data as Record<string, unknown>);
+        setPaymentTerms(null);
+      } else {
+        setPaymentError((data as { error?: string }).error || "Payment verification failed");
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Payment failed";
+      if (msg.includes("insufficient") || msg.includes("0x1") || msg.includes("could not find")) {
+        setPaymentError(
+          "Insufficient USDC balance. Devnet USDC is required. " +
+          "Run 'npm run agent:demo' for the full payment flow with a pre-funded agent."
+        );
+      } else {
+        setPaymentError(msg);
+      }
+    } finally {
+      setPaymentLoading(false);
+    }
+  }, [publicKey, signTransaction, paymentTerms, selectedService, connection]);
+
+  const closePaymentPanel = useCallback(() => {
+    setSelectedService(null);
+    setPaymentTerms(null);
+    setPaymentResult(null);
+    setPaymentError(null);
+  }, []);
+
   return (
     <div>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -159,6 +260,118 @@ export default function ServicesPage() {
               View transaction
             </a>
           </span>
+        </div>
+      )}
+
+      {selectedService && (
+        <div className="card mb-8" role="region" aria-label="x402 Payment">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-white">
+              x402 Payment: {selectedService.serviceId}
+            </h2>
+            <button
+              onClick={closePaymentPanel}
+              className="text-sm text-slate-400 hover:text-white"
+              aria-label="Close payment panel"
+            >
+              Close
+            </button>
+          </div>
+
+          {paymentLoading && !paymentTerms && !paymentResult && (
+            <div className="flex items-center gap-2 text-sm text-slate-400">
+              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.25" />
+                <path d="M12 2C6.477 2 2 6.477 2 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              Fetching payment terms via x402 protocol...
+            </div>
+          )}
+
+          {paymentTerms && (
+            <div>
+              <div className="mb-4 rounded-lg border border-midnight-700 bg-midnight-800/50 p-4">
+                <p className="mb-3 text-xs font-medium uppercase tracking-wider text-shadow-400">
+                  HTTP 402 Response
+                </p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Protocol</span>
+                    <span className="text-white">x402 v{paymentTerms.x402Version}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Network</span>
+                    <span className="text-white">{paymentTerms.network}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Amount</span>
+                    <span className="font-semibold text-white">
+                      {paymentTerms.payment.amountUSDC} USDC
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Recipient</span>
+                    <span className="font-mono text-xs text-slate-300" title={paymentTerms.payment.recipientWallet}>
+                      {paymentTerms.payment.recipientWallet.slice(0, 8)}...{paymentTerms.payment.recipientWallet.slice(-4)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Token</span>
+                    <span className="font-mono text-xs text-slate-300" title={paymentTerms.payment.mint}>
+                      {paymentTerms.payment.mint.slice(0, 8)}...{paymentTerms.payment.mint.slice(-4)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {publicKey && signTransaction ? (
+                <button
+                  onClick={handlePayConfirm}
+                  disabled={paymentLoading}
+                  className="btn-primary w-full"
+                >
+                  {paymentLoading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.25" />
+                        <path d="M12 2C6.477 2 2 6.477 2 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                      Processing payment...
+                    </span>
+                  ) : (
+                    "Pay with Wallet"
+                  )}
+                </button>
+              ) : (
+                <p className="text-sm text-slate-400">
+                  Connect your wallet to pay, or run{" "}
+                  <code className="rounded bg-midnight-800 px-1.5 py-0.5 text-xs text-shadow-300">
+                    npm run agent:demo
+                  </code>{" "}
+                  for the CLI agent demo.
+                </p>
+              )}
+            </div>
+          )}
+
+          {paymentResult && (
+            <div className="rounded-lg border border-shadow-800/40 bg-shadow-900/10 p-4">
+              <p className="mb-2 text-sm font-medium text-shadow-400">Payment Verified</p>
+              <pre className="overflow-x-auto rounded bg-midnight-900 p-3 text-xs text-slate-300">
+                {JSON.stringify(paymentResult, null, 2)}
+              </pre>
+            </div>
+          )}
+
+          {paymentError && (
+            <div className="alert-error" role="alert">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="mt-0.5 shrink-0" aria-hidden="true">
+                <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M8 5V8.5M8 11H8.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              <span>{paymentError}</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -319,9 +532,8 @@ export default function ServicesPage() {
               description={service.description}
               owner={service.owner}
               active={service.active}
-              onPay={() => {
-                // x402 payment flow triggered via demo agent
-              }}
+              onPay={() => handlePayRequest(service)}
+              loading={paymentLoading && selectedService?.serviceId === service.serviceId}
             />
           ))}
         </div>

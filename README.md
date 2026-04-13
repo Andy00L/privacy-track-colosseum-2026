@@ -93,29 +93,46 @@ Pre-built TypeScript agent that autonomously discovers services, pays via x402, 
 
 ## Architecture
 
-```
-         ┌──────────────────────────────────────────┐
-         │         Next.js 16 (App Router)           │
-         │  Dashboard UI + x402 API Routes           │
-         └──────────────────┬───────────────────────┘
-                            │
-            ┌───────────────┼────────────────┐
-            │               │                │
-            ▼               ▼                ▼
-   ┌──────────────┐ ┌────────────┐  ┌──────────────────┐
-   │  Service      │ │ MagicBlock │  │  MagicBlock      │
-   │  Registry     │ │ PER (TEE)  │  │  Private Payments│
-   │  (Anchor PDA) │ │ Agent State│  │  API             │
-   └──────┬───────┘ └────────────┘  └──────────────────┘
-          │
-          ▼
-   ┌──────────┐
-   │  Solana   │
-   │  Devnet   │
-   └──────────┘
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        Agent["AI Agent<br/>(TypeScript)"]
+        Dashboard["Next.js Dashboard<br/>(React + Wallet Adapter)"]
+    end
+
+    subgraph "Application Layer"
+        API["Next.js API Routes<br/>x402 Payment Gateway"]
+        PayClient["Private Payments<br/>Client"]
+        PERClient["PER Client<br/>(TEE Auth)"]
+    end
+
+    subgraph "Solana L1"
+        Program["ShadowPay Program<br/>(Anchor/Rust)"]
+        ServicePDA["ServiceAccount PDAs"]
+        AgentPDA["AgentAccount PDAs"]
+    end
+
+    subgraph "MagicBlock Privacy Layer"
+        PER["Private Ephemeral Rollup<br/>(Intel TDX TEE)"]
+        PPAPI["Private Payments API<br/>(Confidential USDC)"]
+    end
+
+    Agent -->|"1. GET /api/services/:id"| API
+    API -->|"2. HTTP 402 + payment terms"| Agent
+    Agent -->|"3. Build private transfer"| PayClient
+    PayClient -->|"4. Unsigned TX"| PPAPI
+    Agent -->|"5. GET + X-Payment header"| API
+    API -->|"6. Verify payment"| Program
+    API -->|"7. Return data"| Agent
+    API -->|"8. Update state"| PER
+
+    Dashboard -->|"Wallet connect"| Program
+    Program --> ServicePDA
+    Program --> AgentPDA
+    PERClient -->|"TEE Auth"| PER
 ```
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed diagrams and data flows.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed sequence diagrams and data flows.
 
 ## Tech Stack
 

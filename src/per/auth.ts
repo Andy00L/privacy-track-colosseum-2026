@@ -17,7 +17,9 @@ export async function verifyTeeIntegrity(): Promise<{
   attestation?: string;
 }> {
   try {
-    const response = await fetch(`${PER_TEE_URL}/attestation`);
+    const response = await fetch(`${PER_TEE_URL}/attestation`, {
+      signal: AbortSignal.timeout(10000),
+    });
     if (!response.ok) {
       return { verified: false };
     }
@@ -44,6 +46,7 @@ export async function getAuthToken(
   const response = await fetch(`${PER_TEE_URL}/auth`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(10000),
     body: JSON.stringify({
       publicKey: signer.publicKey.toBase58(),
       message,
