@@ -37,7 +37,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "INPUT=$(cat); CMD=$(echo \"$INPUT\" | jq -r '.input.command // empty' 2>/dev/null); if echo \"$CMD\" | grep -qiE 'gh repo (delete|archive|edit)|git push.*--force|git reset --hard|rm -rf /|rm -rf ~|rm -rf \\.|rm -r -f|chmod (-R )?777|/mnt/[a-z]/'; then echo '{\"decision\": \"block\", \"reason\": \"Commande bloquée par safeguard hackathon\"}'; else echo '{\"decision\": \"allow\"}'; fi"
+            "command": "/home/drew/hackathons/privacy-track-colosseum-2026/.claude/hooks/pretooluse-safeguard.sh"
           }
         ]
       }
