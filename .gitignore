@@ -1,0 +1,16 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+venv/
+__pycache__/
+dist/
+build/
+.next/
+target/
+*.log
+.pipeline.log
+.pipeline-live.log
+.ultraplan-done
+.DS_Store
+.claude-stderr.log
