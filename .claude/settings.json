@@ -3,6 +3,7 @@
     "deny": [
       "Bash(chmod -R 777 *)",
       "Bash(chmod 777 *)",
+      "Bash(dd if=*)",
       "Bash(gh repo archive *)",
       "Bash(gh repo delete *)",
       "Bash(gh repo edit *)",
@@ -11,6 +12,7 @@
       "Bash(git push --force-with-lease *)",
       "Bash(git push origin --force *)",
       "Bash(git reset --hard *)",
+      "Bash(mkfs.*)",
       "Bash(rm -r -f *)",
       "Bash(rm -rf .)",
       "Bash(rm -rf /)",
@@ -18,6 +20,8 @@
       "Bash(rm -rf ~)"
     ],
     "allow": [
+      "Agent",
+      "Bash",
       "Bash(gh repo create *)",
       "Bash(gh repo view *)",
       "Bash(git add *)",
@@ -27,8 +31,17 @@
       "Bash(git push origin *)",
       "Bash(git remote add *)",
       "Bash(git status *)",
-      "Bash(git tag *)"
-    ]
+      "Bash(git tag *)",
+      "Edit",
+      "Glob",
+      "Grep",
+      "MultiEdit",
+      "Read",
+      "WebFetch",
+      "WebSearch",
+      "Write"
+    ],
+    "defaultMode": "acceptEdits"
   },
   "hooks": {
     "PreToolUse": [
