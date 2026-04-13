@@ -14,3 +14,5 @@ target/
 .ultraplan-done
 .DS_Store
 .claude-stderr.log
+test-ledger/
+demo-agent.json

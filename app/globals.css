@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --shadow-primary: #14be6a;
+  --shadow-accent: #3dd888;
+  --midnight-deep: #0b1526;
+  --midnight-surface: #1e3d6e;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--midnight-deep);
+  color: #e2e8f0;
+}
+
+::selection {
+  background: rgba(20, 190, 106, 0.3);
+  color: #ffffff;
+}
+
+@layer base {
+  * {
+    @apply border-midnight-800;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-lg border border-midnight-700/50 bg-midnight-900/60 p-6 backdrop-blur-sm;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-lg bg-shadow-600 px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-shadow-500 focus:outline-none focus:ring-2 focus:ring-shadow-400 focus:ring-offset-2 focus:ring-offset-midnight-950 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-lg border border-midnight-600 bg-midnight-800/50 px-5 py-2.5 text-sm font-medium text-slate-200 transition-all hover:bg-midnight-700/50 hover:border-midnight-500 focus:outline-none focus:ring-2 focus:ring-shadow-400 focus:ring-offset-2 focus:ring-offset-midnight-950 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .input-field {
+    @apply w-full rounded-lg border border-midnight-600 bg-midnight-800/50 px-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 transition-colors focus:border-shadow-500 focus:outline-none focus:ring-1 focus:ring-shadow-500;
+  }
+}
