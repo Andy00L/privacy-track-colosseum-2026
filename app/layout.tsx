@@ -6,7 +6,7 @@ import { Navbar } from "./components/Navbar";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ShadowPay -- Private Agent Payments on Solana",
+  title: "ShadowPay | Private Agent Payments on Solana",
   description:
     "Private machine-to-machine payments for the agentic economy. x402-powered with MagicBlock privacy on Solana.",
   icons: {
