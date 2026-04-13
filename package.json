@@ -10,7 +10,8 @@
     "agent:demo": "tsx src/agent/runner.ts",
     "anchor:build": "anchor build",
     "anchor:test": "anchor test",
-    "anchor:deploy": "anchor deploy"
+    "anchor:deploy": "anchor deploy",
+    "test:x402": "tsx tests/x402-flow.test.ts"
   },
   "repository": {
     "type": "git",

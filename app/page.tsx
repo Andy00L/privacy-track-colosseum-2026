@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TryProtocol } from "./components/TryProtocol";
 
 function ProtocolFlowDiagram() {
   return (
@@ -244,6 +245,25 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* Try the Protocol */}
+      <section className="w-full max-w-4xl py-16 sm:py-24">
+        <div className="mb-10 text-center">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-shadow-500">
+            Live Demo
+          </p>
+          <h2 className="mb-3 text-3xl font-bold tracking-tight text-white">
+            Try the x402 protocol
+          </h2>
+          <p className="mx-auto max-w-md text-sm text-slate-400">
+            Click a service to query the gateway. No wallet needed. See the HTTP 402 payment terms that agents negotiate automatically.
+          </p>
+        </div>
+        <TryProtocol />
+      </section>
+
+      {/* Glow divider */}
+      <div className="glow-line w-full max-w-lg" aria-hidden="true" />
 
       {/* Features grid -- asymmetric layout */}
       <section className="w-full max-w-4xl py-16 sm:py-24">

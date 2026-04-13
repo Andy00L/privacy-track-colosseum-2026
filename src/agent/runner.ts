@@ -142,7 +142,8 @@ async function main() {
   // Step 1: Request the service (get 402)
   console.log("\nStep 1: Requesting service (expecting 402)...");
   const quoteResponse = await fetch(
-    `${GATEWAY_URL}/api/services/${service.id}`
+    `${GATEWAY_URL}/api/services/${service.id}`,
+    { signal: AbortSignal.timeout(10000) }
   );
 
   if (quoteResponse.status !== 402) {
