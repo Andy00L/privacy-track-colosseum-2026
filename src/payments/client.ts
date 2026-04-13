@@ -85,7 +85,7 @@ export class PrivatePaymentsClient {
     mint: string
   ): Promise<BalanceResponse> {
     return this.apiRequest<BalanceResponse>(
-      `/balance?owner=${ownerPublicKey}&mint=${mint}`
+      `/balance?owner=${encodeURIComponent(ownerPublicKey)}&mint=${encodeURIComponent(mint)}`
     );
   }
 

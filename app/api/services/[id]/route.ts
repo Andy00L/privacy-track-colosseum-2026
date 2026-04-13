@@ -15,9 +15,13 @@ const USDC_MINT = new PublicKey(
   process.env.NEXT_PUBLIC_USDC_MINT ||
     "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
 );
-const TREASURY = process.env.NEXT_PUBLIC_TREASURY_WALLET
-  ? new PublicKey(process.env.NEXT_PUBLIC_TREASURY_WALLET)
-  : null;
+const TREASURY_WALLET = process.env.NEXT_PUBLIC_TREASURY_WALLET;
+if (!TREASURY_WALLET) {
+  console.warn(
+    "NEXT_PUBLIC_TREASURY_WALLET is not set. Payment verification will reject all payments."
+  );
+}
+const TREASURY = TREASURY_WALLET ? new PublicKey(TREASURY_WALLET) : null;
 
 // Service registry (in production, read from on-chain)
 const DEMO_SERVICES: Record<
@@ -59,15 +63,18 @@ export async function GET(
   const xPayment = request.headers.get("x-payment");
 
   if (!xPayment) {
-    // Return 402 with payment requirements
-    const treasuryKey = TREASURY || PublicKey.default;
-    let tokenAccount: string;
-    try {
-      const ata = await getAssociatedTokenAddress(USDC_MINT, treasuryKey);
-      tokenAccount = ata.toBase58();
-    } catch {
-      tokenAccount = treasuryKey.toBase58();
+    if (!TREASURY) {
+      return NextResponse.json(
+        { error: "Payment gateway not configured: treasury wallet missing" },
+        { status: 503 }
+      );
     }
+
+    // Return 402 with payment requirements
+    const treasuryKey = TREASURY;
+    const tokenAccount = (
+      await getAssociatedTokenAddress(USDC_MINT, treasuryKey)
+    ).toBase58();
 
     return NextResponse.json(
       {
@@ -100,6 +107,13 @@ export async function GET(
       );
     }
 
+    if (!TREASURY) {
+      return NextResponse.json(
+        { error: "Payment gateway not configured" },
+        { status: 503 }
+      );
+    }
+
     const connection = new Connection(SOLANA_RPC, "confirmed");
     const txBuffer = Buffer.from(
       paymentData.payload.serializedTransaction,
@@ -107,13 +121,27 @@ export async function GET(
     );
     const tx = Transaction.from(txBuffer);
 
-    // Verify SPL Token transfer instruction exists
+    // Compute expected treasury token account
+    const expectedDestination = await getAssociatedTokenAddress(
+      USDC_MINT,
+      TREASURY
+    );
+
+    // Verify SPL Token transfer instruction with destination and amount validation
     let validTransfer = false;
     for (const ix of tx.instructions) {
       if (ix.programId.equals(TOKEN_PROGRAM_ID)) {
+        // SPL Token Transfer instruction: opcode 3, amount at bytes 1-8
         if (ix.data.length >= 9 && ix.data[0] === 3) {
           const transferAmount = Number(ix.data.readBigUInt64LE(1));
-          if (transferAmount >= service.price) {
+
+          // Validate destination is treasury's token account
+          const destination = ix.keys.length >= 2 ? ix.keys[1].pubkey : null;
+          if (
+            destination &&
+            destination.equals(expectedDestination) &&
+            transferAmount >= service.price
+          ) {
             validTransfer = true;
             break;
           }
@@ -123,7 +151,7 @@ export async function GET(
 
     if (!validTransfer) {
       return NextResponse.json(
-        { error: "Invalid payment: insufficient USDC transfer" },
+        { error: "Invalid payment: transfer must send sufficient USDC to the treasury" },
         { status: 402 }
       );
     }

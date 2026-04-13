@@ -1,4 +1,4 @@
-# Demo Script — ShadowPay (3 minutes)
+# Demo Script - ShadowPay (3 minutes)
 
 ## Prerequisites
 - Solana wallet (Phantom) with devnet SOL

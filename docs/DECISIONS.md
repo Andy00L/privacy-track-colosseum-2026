@@ -1,4 +1,4 @@
-# Technical Decisions — ShadowPay
+# Technical Decisions - ShadowPay
 
 ## D1: Next.js-only architecture (no Express.js gateway)
 

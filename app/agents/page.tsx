@@ -14,7 +14,7 @@ interface AgentEntry {
 
 const PROGRAM_ID = new PublicKey(
   process.env.NEXT_PUBLIC_SHADOWPAY_PROGRAM_ID ||
-    "Eue6v8bKt86HRKH5tSX2caKQyoGhpRWFVNVA72JHcnZ3"
+    "85nd28UHwfBzDcA9fRcCFjSGvdvvns7u7yxjcwVjuzpK"
 );
 
 export default function AgentsPage() {

@@ -1,4 +1,4 @@
-# Resources & Documentation — ShadowPay
+# Resources & Documentation - ShadowPay
 
 ## MagicBlock
 
@@ -19,14 +19,14 @@
 - **TEE Validators:**
   - Devnet TEE: `https://devnet-tee.magicblock.app`
   - Mainnet TEE: regional endpoints available
-- **Key Difference from ER:** PER adds compliance enforcement — node-level IP geofencing, OFAC sanction list, restricted jurisdictions at ingress
+- **Key Difference from ER:** PER adds compliance enforcement - node-level IP geofencing, OFAC sanction list, restricted jurisdictions at ingress
 - **SDK minimum:** ephemeral-rollups-sdk v0.8.0+
 
 ### Private Payments API
 - **Demo repo:** https://github.com/magicblock-labs/private-payments-demo
 - **API Base:** `payments.magicblock.app`
 - **Reference:** `payments.magicblock.app/reference`
-- **How it works:** Users delegate USDC into a PER running inside TEE. Recipient details and release instructions encrypted client-side at delegation time. Built-in crank settles funds back to Solana automatically — no traceable on-chain link between sender and receiver.
+- **How it works:** Users delegate USDC into a PER running inside TEE. Recipient details and release instructions encrypted client-side at delegation time. Built-in crank settles funds back to Solana automatically - no traceable on-chain link between sender and receiver.
 - **Endpoints:** Deposit, Transfer, Withdraw, Initialize Mint, Balance queries
 - **Response format:**
   ```json
@@ -73,11 +73,11 @@
 - **Chainstack Tutorial:** https://chainstack.com/x402-on-solana-developer-guide-micro-payments/
 
 ### NPM Packages
-- **@x402/svm** — SVM implementation with ExactSvmClient (V2 protocol, CAIP-2 identifiers)
+- **@x402/svm** - SVM implementation with ExactSvmClient (V2 protocol, CAIP-2 identifiers)
   - `npm install @x402/svm`
   - Components: Client (make payments), Facilitator (verify/execute), Service (accept payments)
-- **@x402/core** — Core protocol types and utilities
-- **x402-solana** — Alternative community package
+- **@x402/core** - Core protocol types and utilities
+- **x402-solana** - Alternative community package
 
 ### Protocol Flow
 1. Client requests protected endpoint
@@ -108,7 +108,7 @@ const tx = Transaction.from(Buffer.from(paymentData.payload.serializedTransactio
 
 ### Facilitator Options
 - **Corbits:** Solana-first SDK for x402 flows
-- **PayAI:** Covers transaction fees — payai.network
+- **PayAI:** Covers transaction fees - payai.network
 - **Coinbase:** Reference implementation
 - **ACK (Agent Commerce Kit):** Verifiable agent identity + receipt generation
 
@@ -121,9 +121,9 @@ const tx = Transaction.from(Buffer.from(paymentData.payload.serializedTransactio
 ## Solana Development
 
 ### Core Dependencies
-- **@solana/web3.js** — Solana JavaScript SDK
-- **@solana/spl-token** — SPL Token program interactions
-- **@solana/wallet-adapter-react** — Wallet connection for React/Next.js
+- **@solana/web3.js** - Solana JavaScript SDK
+- **@solana/spl-token** - SPL Token program interactions
+- **@solana/wallet-adapter-react** - Wallet connection for React/Next.js
 - **Anchor Framework:** https://www.anchor-lang.com/docs
 - **Anchor Book:** https://book.anchor-lang.com/
 

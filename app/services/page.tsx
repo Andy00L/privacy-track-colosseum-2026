@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { PublicKey, Transaction, SystemProgram } from "@solana/web3.js";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { PublicKey } from "@solana/web3.js";
 import { ServiceCard } from "../components/ServiceCard";
 
 interface ServiceForm {
@@ -23,12 +23,11 @@ interface ServiceEntry {
 
 const PROGRAM_ID = new PublicKey(
   process.env.NEXT_PUBLIC_SHADOWPAY_PROGRAM_ID ||
-    "Eue6v8bKt86HRKH5tSX2caKQyoGhpRWFVNVA72JHcnZ3"
+    "85nd28UHwfBzDcA9fRcCFjSGvdvvns7u7yxjcwVjuzpK"
 );
 
 export default function ServicesPage() {
-  const { connection } = useConnection();
-  const { publicKey, sendTransaction } = useWallet();
+  const { publicKey } = useWallet();
   const [services, setServices] = useState<ServiceEntry[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -41,7 +40,7 @@ export default function ServicesPage() {
   });
 
   const handleRegister = useCallback(async () => {
-    if (!publicKey || !sendTransaction) {
+    if (!publicKey) {
       setError("Connect your wallet first");
       return;
     }
@@ -89,7 +88,7 @@ export default function ServicesPage() {
     } finally {
       setLoading(false);
     }
-  }, [publicKey, sendTransaction, form]);
+  }, [publicKey, form]);
 
   return (
     <div>

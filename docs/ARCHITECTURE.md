@@ -1,4 +1,4 @@
-# Architecture — ShadowPay
+# Architecture - ShadowPay
 
 ## System Overview
 
@@ -63,16 +63,16 @@ graph TB
 On-chain service and agent registry. Stores metadata about available API services and registered agents using PDAs.
 
 **Accounts:**
-- `ServiceAccount` — PDA seeds: `["service", owner, service_id]`
+- `ServiceAccount` - PDA seeds: `["service", owner, service_id]`
   - Fields: owner, service_id, endpoint, price_lamports, token_mint, description, active, created_at, bump
-- `AgentAccount` — PDA seeds: `["agent", owner]`
+- `AgentAccount` - PDA seeds: `["agent", owner]`
   - Fields: owner, name, active, total_payments, created_at, bump
 
 **Instructions:**
-- `register_service` — Create a new service listing
-- `register_agent` — Register an AI agent
-- `update_service` — Modify service details (owner only)
-- `deregister_service` — Mark service inactive (owner only)
+- `register_service` - Create a new service listing
+- `register_agent` - Register an AI agent
+- `update_service` - Modify service details (owner only)
+- `deregister_service` - Mark service inactive (owner only)
 
 ### 2. x402 Payment Gateway
 
@@ -89,11 +89,11 @@ Uses standard x402 flow compatible with any x402 client.
 **Location:** `src/payments/`
 
 Wrapper around MagicBlock's Private Payments API. Handles:
-- `deposit()` — Move USDC into the private pool
-- `transfer()` — Confidential USDC transfer between agents
-- `withdraw()` — Move USDC back to Solana L1
-- `getBalance()` — Query encrypted balance
-- `signAndSend()` — Sign unsigned TX from API and submit
+- `deposit()` - Move USDC into the private pool
+- `transfer()` - Confidential USDC transfer between agents
+- `withdraw()` - Move USDC back to Solana L1
+- `getBalance()` - Query encrypted balance
+- `signAndSend()` - Sign unsigned TX from API and submit
 
 ### 4. PER Client
 
@@ -110,10 +110,10 @@ Client for MagicBlock's Private Ephemeral Rollup:
 **Location:** `app/`
 
 Web interface for managing services and agents:
-- **Landing** (`/`) — Project overview and how-it-works
-- **Services** (`/services`) — Browse and register API services
-- **Agents** (`/agents`) — Deploy and monitor AI agents
-- **Dashboard** (`/dashboard`) — Wallet info, balances, activity
+- **Landing** (`/`) - Project overview and how-it-works
+- **Services** (`/services`) - Browse and register API services
+- **Agents** (`/agents`) - Deploy and monitor AI agents
+- **Dashboard** (`/dashboard`) - Wallet info, balances, activity
 
 ### 6. Demo Agent
 
