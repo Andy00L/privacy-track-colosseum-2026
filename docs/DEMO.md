@@ -24,6 +24,9 @@
   - Description: `Real-time weather data`
 - Click "Register on Solana"
 - Show the service card appearing in the list
+- Click "Pay & Access" on one of the demo services (e.g. `weather`)
+- Show the x402 payment terms panel: HTTP 402 response with protocol version, network, USDC amount, recipient
+- If wallet has devnet USDC, click "Pay with Wallet" to complete the full x402 flow
 
 ### 1:00 - 1:30 | Deploy an Agent
 - Navigate to Agents page
