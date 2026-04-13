@@ -191,6 +191,8 @@ shadowpay/
 │   ├── payments/           # MagicBlock Private Payments client
 │   ├── per/                # PER/TEE auth client
 │   └── agent/              # Demo agent runner
+├── tests/
+│   └── x402-flow.test.ts   # x402 API integration tests
 ├── docs/                   # Documentation
 ├── scripts/setup.sh        # One-liner setup
 └── .env.example            # Environment template
